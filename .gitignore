@@ -1,6 +1,9 @@
 # Compiled binary (built via `go build -o gaze ./cmd/gaze`)
 /gaze
 
+# GoReleaser build output
+/dist/
+
 # Test / coverage artifacts
 *.test
 *.out
