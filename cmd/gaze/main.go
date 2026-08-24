@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -26,6 +27,31 @@ func (m *multiFlag) Set(v string) error {
 // version is overwritten at build time via -ldflags "-X main.version=...".
 var version = "dev"
 
+// resolveVersion prefers an ldflags-injected version, then the module version
+// embedded by `go install`, then the VCS commit of a local build.
+func resolveVersion() string {
+	if version != "dev" {
+		return version
+	}
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return version
+	}
+	if v := info.Main.Version; v != "" && v != "(devel)" {
+		return v
+	}
+	for _, s := range info.Settings {
+		if s.Key == "vcs.revision" {
+			rev := s.Value
+			if len(rev) > 7 {
+				rev = rev[:7]
+			}
+			return "dev (" + rev + ")"
+		}
+	}
+	return version
+}
+
 func main() {
 	own, command := splitArgs(os.Args[1:])
 
@@ -40,7 +66,7 @@ func main() {
 	fs.Parse(own)
 
 	if *showVersion {
-		fmt.Println("gaze", version)
+		fmt.Println("gaze", resolveVersion())
 		return
 	}
 
