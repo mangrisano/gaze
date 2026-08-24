@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/mangrisano/gaze/actions/workflows/ci.yml/badge.svg)](https://github.com/mangrisano/gaze/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/tag/mangrisano/gaze?sort=semver&label=release)](https://github.com/mangrisano/gaze/tags)
+[![Downloads](https://img.shields.io/github/downloads/mangrisano/gaze/total?label=downloads)](https://github.com/mangrisano/gaze/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
