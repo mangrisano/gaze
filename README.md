@@ -105,4 +105,4 @@ Requires Go 1.27+. The only dependency is [`github.com/fsnotify/fsnotify`](https
 
 ## License
 
-[MIT](LICENSE) © Michele Angrisano
+MIT — see [LICENSE](LICENSE).
