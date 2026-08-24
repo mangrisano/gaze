@@ -27,6 +27,14 @@ Runs your tests once immediately, then again on every save.
 
 ## Install
 
+### Homebrew (macOS / Linux)
+
+```sh
+brew install mangrisano/gaze/gaze
+```
+
+### Go
+
 ```sh
 go install github.com/mangrisano/gaze/cmd/gaze@latest
 ```
