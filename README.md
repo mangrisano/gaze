@@ -48,6 +48,7 @@ Everything after `--` is the command to run.
 | `-p path`   |    yes     | `.`         | Directory to watch (recursively).                             |
 | `-i substr` |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`). |
 | `-d dur`    |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).        |
+| `--version` |     no     | —           | Print the version and exit (also `-v`).                       |
 
 ## Examples
 
@@ -99,6 +100,12 @@ internal/watcher/  package watcher — the pipeline (Config + Run)
 go build ./...
 go test ./...          # add -race for the concurrency parts
 go vet ./...
+```
+
+To embed the version in the binary, inject it at build time:
+
+```sh
+go build -ldflags "-X main.version=$(git describe --tags)" -o gaze ./cmd/gaze
 ```
 
 Requires Go 1.27+. The only dependency is [`github.com/fsnotify/fsnotify`](https://github.com/fsnotify/fsnotify).

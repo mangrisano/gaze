@@ -23,6 +23,9 @@ func (m *multiFlag) Set(v string) error {
 	return nil
 }
 
+// version is overwritten at build time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
 	own, command := splitArgs(os.Args[1:])
 
@@ -32,7 +35,14 @@ func main() {
 	fs.Var(&paths, "p", "directory to watch, repeatable (default .)")
 	fs.Var(&ignore, "i", "path substring to ignore, repeatable (e.g. -i vendor)")
 	delay := fs.Duration("d", 200*time.Millisecond, "debounce window")
+	showVersion := fs.Bool("v", false, "print version and exit")
+	fs.BoolVar(showVersion, "version", false, "print version and exit")
 	fs.Parse(own)
+
+	if *showVersion {
+		fmt.Println("gaze", version)
+		return
+	}
 
 	if len(command) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: gaze [flags] -- <command> [args...]")
