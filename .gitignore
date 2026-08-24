@@ -1,0 +1,10 @@
+# Compiled binary (built via `go build -o watch .`)
+/watch
+
+# Test / coverage artifacts
+*.test
+*.out
+coverage.*
+
+# OS junk
+.DS_Store
