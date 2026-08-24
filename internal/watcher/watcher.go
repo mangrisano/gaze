@@ -54,7 +54,7 @@ func Run(ctx context.Context, cfg Config) error {
 	for {
 		select {
 		case event := <-w.Events:
-			if shouldRun(event.Name, cfg.Exts, cfg.Ignore) {
+			if shouldRun(event.Name, event.Op, cfg.Exts, cfg.Ignore) {
 				in <- struct{}{}
 			}
 		case err := <-w.Errors:
