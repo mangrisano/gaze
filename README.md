@@ -39,6 +39,16 @@ go install ./cmd/gaze
 
 The binary lands in `$(go env GOPATH)/bin`, which must be on your `PATH`.
 
+### Pre-built binaries
+
+No Go toolchain? Grab a ready-made binary for your platform (Linux, macOS and Windows, `amd64`/`arm64`) from the [latest release](https://github.com/mangrisano/gaze/releases/latest). For example, on macOS (arm64):
+
+```sh
+VERSION=0.1.2
+curl -sL "https://github.com/mangrisano/gaze/releases/download/v${VERSION}/gaze_${VERSION}_darwin_arm64.tar.gz" | tar xz
+./gaze --version
+```
+
 ## Usage
 
 ```
