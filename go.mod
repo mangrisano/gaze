@@ -1,4 +1,4 @@
-module watch
+module github.com/mangrisano/gaze
 
 go 1.27
 

@@ -1,8 +1,9 @@
-package main
+package watcher
 
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"testing"
 )
@@ -29,7 +30,7 @@ func TestCollectDirs(t *testing.T) {
 	want := []string{root, filepath.Join(root, "a"), filepath.Join(root, "a", "b")}
 	sort.Strings(dirs)
 	sort.Strings(want)
-	if !equalArgs(dirs, want) {
+	if !slices.Equal(dirs, want) {
 		t.Fatalf("collectDirs = %v, want %v", dirs, want)
 	}
 }

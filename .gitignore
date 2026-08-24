@@ -1,5 +1,5 @@
-# Compiled binary (built via `go build -o watch .`)
-/watch
+# Compiled binary (built via `go build -o gaze ./cmd/gaze`)
+/gaze
 
 # Test / coverage artifacts
 *.test
