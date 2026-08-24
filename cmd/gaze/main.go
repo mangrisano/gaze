@@ -58,7 +58,7 @@ func main() {
 	fs := flag.NewFlagSet("gaze", flag.ExitOnError)
 	var exts, paths, ignore multiFlag
 	fs.Var(&exts, "e", "file extension to watch, repeatable (e.g. -e go)")
-	fs.Var(&paths, "p", "directory to watch, repeatable (default .)")
+	fs.Var(&paths, "p", "file or directory to watch, repeatable (default .)")
 	fs.Var(&ignore, "i", "path substring to ignore, repeatable (e.g. -i vendor)")
 	delay := fs.Duration("d", 200*time.Millisecond, "debounce window")
 	showVersion := fs.Bool("v", false, "print version and exit")

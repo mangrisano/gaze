@@ -69,7 +69,7 @@ Everything after `--` is the command to run.
 | Flag        | Repeatable | Default     | Description                                                   |
 | ----------- | :--------: | ----------- | ------------------------------------------------------------- |
 | `-e ext`    |    yes     | (all files) | Only react to files with this extension (e.g. `-e go`).       |
-| `-p path`   |    yes     | `.`         | Directory to watch (recursively).                             |
+| `-p path`   |    yes     | `.`         | File or directory to watch (dirs are recursive).              |
 | `-i substr` |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`). |
 | `-d dur`    |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).        |
 | `--version` |     no     | —           | Print the version and exit (also `-v`).                       |
@@ -92,6 +92,12 @@ Longer debounce for noisy editors:
 
 ```sh
 gaze -d 500ms -e go -- go vet ./...
+```
+
+Watch a single file — only that file triggers a run (its parent dir is watched, so editor "atomic saves" are caught too):
+
+```sh
+gaze -p notes.txt -- cat notes.txt
 ```
 
 ## How it works

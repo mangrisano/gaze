@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 
 // Config holds the resolved options for a watch session.
 type Config struct {
-	Paths    []string      // directories to watch (recursively)
+	Paths    []string      // files or directories to watch (dirs recursively)
 	Exts     []string      // file extensions that trigger a run; empty = all
 	Ignore   []string      // path substrings to ignore
 	Debounce time.Duration // coalesce a burst of events into one run
@@ -29,18 +30,36 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 	defer w.Close()
 
+	// Split targets into exact files and directory trees. A file is watched via
+	// its parent dir (so editor atomic saves are still caught) but fires only on
+	// its exact path; a directory is watched recursively and filtered by -e/-i.
+	files := make(map[string]bool)
+	treeDirs := make(map[string]bool)
+	watch := func(d string) {
+		if err := w.Add(d); err != nil {
+			// Best-effort: skip a dir we can't watch (sockets, protected
+			// paths, ...) rather than refusing to start at all.
+			fmt.Fprintf(os.Stderr, "gaze: skipping %q: %v\n", d, err)
+		}
+	}
 	for _, p := range cfg.Paths {
-		dirs, err := collectDirs(p, cfg.Ignore)
+		info, err := os.Stat(p)
 		if err != nil {
-			return fmt.Errorf("cannot scan %q: %w", p, err)
+			return fmt.Errorf("cannot access %q: %w", p, err)
 		}
-		for _, d := range dirs {
-			if err := w.Add(d); err != nil {
-				// Best-effort: skip a dir we can't watch (sockets, protected
-				// paths, ...) rather than refusing to start at all.
-				fmt.Fprintf(os.Stderr, "gaze: skipping %q: %v\n", d, err)
+		if info.IsDir() {
+			dirs, err := collectDirs(p, cfg.Ignore)
+			if err != nil {
+				return fmt.Errorf("cannot scan %q: %w", p, err)
 			}
+			for _, d := range dirs {
+				treeDirs[filepath.Clean(d)] = true
+				watch(d)
+			}
+			continue
 		}
+		files[filepath.Clean(p)] = true
+		watch(filepath.Dir(p))
 	}
 
 	// Pipeline: raw pings -> debounce -> runLoop -> the command.
@@ -56,7 +75,7 @@ func Run(ctx context.Context, cfg Config) error {
 	for {
 		select {
 		case event := <-w.Events:
-			if shouldRun(event.Name, event.Op, cfg.Exts, cfg.Ignore) {
+			if wantsRun(event.Name, event.Op, cfg.Exts, cfg.Ignore, files, treeDirs) {
 				in <- struct{}{}
 			}
 		case err := <-w.Errors:

@@ -35,3 +35,31 @@ func TestShouldRun(t *testing.T) {
 		})
 	}
 }
+
+func TestWantsRun(t *testing.T) {
+	files := map[string]bool{"notes/todo.txt": true}
+	treeDirs := map[string]bool{"src": true}
+	cases := []struct {
+		name     string
+		path     string
+		op       fsnotify.Op
+		exts     []string
+		files    map[string]bool
+		treeDirs map[string]bool
+		want     bool
+	}{
+		{"exact file target fires", "notes/todo.txt", fsnotify.Write, nil, files, treeDirs, true},
+		{"exact file ignores chmod-only", "notes/todo.txt", fsnotify.Chmod, nil, files, treeDirs, false},
+		{"sibling in a file's dir is ignored", "notes/other.txt", fsnotify.Write, nil, files, treeDirs, false},
+		{"file in a watched tree fires via extension", "src/main.go", fsnotify.Write, []string{"go"}, files, treeDirs, true},
+		{"file in a watched tree with wrong extension", "src/readme.md", fsnotify.Write, []string{"go"}, files, treeDirs, false},
+		{"pure dir mode delegates to shouldRun", "src/main.go", fsnotify.Write, []string{"go"}, nil, treeDirs, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := wantsRun(tc.path, tc.op, tc.exts, nil, tc.files, tc.treeDirs); got != tc.want {
+				t.Fatalf("wantsRun(%q, op=%v) = %v, want %v", tc.path, tc.op, got, tc.want)
+			}
+		})
+	}
+}
