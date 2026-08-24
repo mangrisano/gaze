@@ -1,7 +1,12 @@
 # gaze
 
+<div align="center">
+
 [![CI](https://github.com/mangrisano/gaze/actions/workflows/ci.yml/badge.svg)](https://github.com/mangrisano/gaze/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/mangrisano/gaze?sort=semver&label=release)](https://github.com/mangrisano/gaze/tags)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+</div>
 
 A small file-watcher CLI: it re-runs a command whenever watched files change — like [`entr`](https://eradman.com/entrproject/) or [`watchexec`](https://github.com/watchexec/watchexec), but minimal and written in Go.
 
