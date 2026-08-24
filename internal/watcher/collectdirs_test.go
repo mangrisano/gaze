@@ -34,3 +34,34 @@ func TestCollectDirs(t *testing.T) {
 		t.Fatalf("collectDirs = %v, want %v", dirs, want)
 	}
 }
+
+func TestCollectDirsSkipsUnreadableDir(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root bypasses directory permissions")
+	}
+	root := t.TempDir()
+
+	readable := filepath.Join(root, "readable")
+	blocked := filepath.Join(root, "blocked")
+	for _, d := range []string{readable, blocked} {
+		if err := os.Mkdir(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Chmod(blocked, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	// Restore perms so t.TempDir cleanup can remove the tree.
+	t.Cleanup(func() { _ = os.Chmod(blocked, 0o755) })
+
+	dirs, err := collectDirs(root, nil)
+	if err != nil {
+		t.Fatalf("collectDirs errored on an unreadable subdir: %v", err)
+	}
+	if !slices.Contains(dirs, readable) {
+		t.Fatalf("collectDirs = %v, want it to include %q", dirs, readable)
+	}
+	if slices.Contains(dirs, blocked) {
+		t.Fatalf("collectDirs = %v, should not include the unreadable %q", dirs, blocked)
+	}
+}

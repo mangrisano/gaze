@@ -36,7 +36,9 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 		for _, d := range dirs {
 			if err := w.Add(d); err != nil {
-				return fmt.Errorf("cannot watch %q: %w", d, err)
+				// Best-effort: skip a dir we can't watch (sockets, protected
+				// paths, ...) rather than refusing to start at all.
+				fmt.Fprintf(os.Stderr, "gaze: skipping %q: %v\n", d, err)
 			}
 		}
 	}
