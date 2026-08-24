@@ -34,6 +34,24 @@ archives:
 checksum:
   name_template: checksums.txt
 
+homebrew_casks:
+  - name: gaze
+    repository:
+      owner: mangrisano
+      name: homebrew-gaze
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/mangrisano/gaze"
+    description: "A small file-watcher CLI that re-runs a command whenever watched files change"
+    binaries:
+      - gaze
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/gaze"]
+          end
+
 changelog:
   sort: asc
   filters:
