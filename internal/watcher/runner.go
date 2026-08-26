@@ -15,3 +15,9 @@ func runOnce(ctx context.Context, stdout, stderr io.Writer, name string, args ..
 	err := cmd.Run()
 	return err
 }
+
+// clearScreen writes the ANSI escape sequence that clears the terminal (screen
+// and scrollback) so each run starts from a clean slate.
+func clearScreen(w io.Writer) {
+	io.WriteString(w, "\033[H\033[2J\033[3J")
+}

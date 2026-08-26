@@ -25,3 +25,11 @@ func TestRunOnceReturnsErrorOnFailure(t *testing.T) {
 		t.Fatal("want an error for a command that exits non-zero, got nil")
 	}
 }
+
+func TestClearScreen(t *testing.T) {
+	var buf bytes.Buffer
+	clearScreen(&buf)
+	if got, want := buf.String(), "\033[H\033[2J\033[3J"; got != want {
+		t.Fatalf("clearScreen wrote %q, want %q", got, want)
+	}
+}

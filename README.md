@@ -72,6 +72,7 @@ Everything after `--` is the command to run.
 | `-p path`   |    yes     | `.`         | File or directory to watch (dirs are recursive).              |
 | `-i substr` |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`). |
 | `-d dur`    |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).        |
+| `-c`        |     no     | off         | Clear the terminal before each run.                           |
 | `--version` |     no     | —           | Print the version and exit (also `-v`).                       |
 
 ## Examples
