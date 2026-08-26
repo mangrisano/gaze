@@ -6,16 +6,23 @@ import "context"
 // a new signal arrives so only one runs at a time. It returns when trigger closes.
 func runLoop(trigger <-chan struct{}, run func(ctx context.Context)) {
 	var cancel context.CancelFunc
+	var done chan struct{}
 
-	for range trigger {
+	stop := func() {
 		if cancel != nil {
 			cancel()
+			<-done
 		}
+	}
+	for range trigger {
+		stop()
 		newCtx, cancFunc := context.WithCancel((context.Background()))
 		cancel = cancFunc
-		go run(newCtx)
+		done = make(chan struct{})
+		go func() {
+			run(newCtx)
+			close(done)
+		}()
 	}
-	if cancel != nil {
-		cancel()
-	}
+	stop()
 }

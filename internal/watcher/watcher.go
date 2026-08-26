@@ -17,6 +17,7 @@ type Config struct {
 	Paths    []string      // files or directories to watch (dirs recursively)
 	Exts     []string      // file extensions that trigger a run; empty = all
 	Clear    bool          // if true, clean the terminal and scrollback
+	Restart  bool          // restart mode
 	Ignore   []string      // path substrings to ignore
 	Debounce time.Duration // coalesce a burst of events into one run
 	Command  []string      // the command to run, name first
@@ -70,7 +71,7 @@ func Run(ctx context.Context, cfg Config) error {
 		if cfg.Clear {
 			clearScreen(os.Stdout)
 		}
-		runOnce(runCtx, os.Stdout, os.Stderr, cfg.Command[0], cfg.Command[1:]...)
+		runOnce(runCtx, cfg.Restart, os.Stdout, os.Stderr, cfg.Command[0], cfg.Command[1:]...)
 	})
 
 	fmt.Printf("watching %s  cmd: %s\n", strings.Join(cfg.Paths, ", "), strings.Join(cfg.Command, " "))

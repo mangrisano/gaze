@@ -61,6 +61,7 @@ func main() {
 	fs.Var(&paths, "p", "file or directory to watch, repeatable (default .)")
 	fs.Var(&ignore, "i", "path substring to ignore, repeatable (e.g. -i vendor)")
 	clear := fs.Bool("c", false, "clear the terminal before watching")
+	restart := fs.Bool("r", false, "restart mode: SIGTERM + process-group kill for long running commands")
 	delay := fs.Duration("d", 200*time.Millisecond, "debounce window")
 	showVersion := fs.Bool("v", false, "print version and exit")
 	fs.BoolVar(showVersion, "version", false, "print version and exit")
@@ -89,6 +90,7 @@ func main() {
 		Ignore:   ignore,
 		Debounce: *delay,
 		Clear:    *clear,
+		Restart:  *restart,
 		Command:  command,
 	}
 	if err := watcher.Run(ctx, cfg); err != nil {

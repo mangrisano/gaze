@@ -66,14 +66,15 @@ gaze [flags] -- <command> [args...]
 
 Everything after `--` is the command to run.
 
-| Flag        | Repeatable | Default     | Description                                                   |
-| ----------- | :--------: | ----------- | ------------------------------------------------------------- |
-| `-e ext`    |    yes     | (all files) | Only react to files with this extension (e.g. `-e go`).       |
-| `-p path`   |    yes     | `.`         | File or directory to watch (dirs are recursive).              |
-| `-i substr` |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`). |
-| `-d dur`    |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).        |
-| `-c`        |     no     | off         | Clear the terminal before each run.                           |
-| `--version` |     no     | —           | Print the version and exit (also `-v`).                       |
+| Flag        | Repeatable | Default     | Description                                                                                                      |
+| ----------- | :--------: | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `-e ext`    |    yes     | (all files) | Only react to files with this extension (e.g. `-e go`).                                                          |
+| `-p path`   |    yes     | `.`         | File or directory to watch (dirs are recursive).                                                                 |
+| `-i substr` |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`).                                                    |
+| `-d dur`    |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).                                                           |
+| `-c`        |     no     | off         | Clear the terminal before each run.                                                                              |
+| `-r`        |     no     | off         | Restart mode for long-running commands: on change, SIGTERM the whole process group (graceful), then start fresh. |
+| `--version` |     no     | —           | Print the version and exit (also `-v`).                                                                          |
 
 ## Examples
 
@@ -99,6 +100,12 @@ Watch a single file — only that file triggers a run (its parent dir is watched
 
 ```sh
 gaze -p notes.txt -- cat notes.txt
+```
+
+Restart a server on change — `-r` gracefully SIGTERMs the whole process group, so the child frees its port before the new instance starts:
+
+```sh
+gaze -r -e go -- go run ./cmd/server
 ```
 
 ## How it works

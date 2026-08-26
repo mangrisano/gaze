@@ -44,3 +44,35 @@ func TestRunLoopCancelsThePreviousRun(t *testing.T) {
 		}
 	}
 }
+
+func TestRunLoopWaitsForThePreviousRun(t *testing.T) {
+	trigger := make(chan struct{})
+	events := make(chan string, 10)
+
+	// Records "start" when a run begins and "end" when its context is cancelled.
+	run := func(ctx context.Context) {
+		events <- "start"
+		<-ctx.Done()
+		events <- "end"
+	}
+
+	go runLoop(trigger, run)
+
+	trigger <- struct{}{} // run 1
+	trigger <- struct{}{} // cancels run 1; must wait for its end before run 2 starts
+	close(trigger)        // cancels run 2
+
+	// A run must fully finish before the next one starts (no overlap), so the
+	// events strictly alternate.
+	want := []string{"start", "end", "start", "end"}
+	for i, w := range want {
+		select {
+		case got := <-events:
+			if got != w {
+				t.Fatalf("event %d = %q, want %q (runs must not overlap)", i, got, w)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("timed out waiting for event %d (%q)", i, w)
+		}
+	}
+}

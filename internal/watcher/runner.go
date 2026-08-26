@@ -8,10 +8,13 @@ import (
 
 // runOnce runs name+args, streaming stdout/stderr to the given writers, and
 // returns the command's exit error (nil on success).
-func runOnce(ctx context.Context, stdout, stderr io.Writer, name string, args ...string) error {
+func runOnce(ctx context.Context, restart bool, stdout, stderr io.Writer, name string, args ...string) error {
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	if restart {
+		setupRestart(cmd)
+	}
 	err := cmd.Run()
 	return err
 }

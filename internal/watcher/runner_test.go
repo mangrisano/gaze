@@ -10,7 +10,7 @@ import (
 
 func TestRunOnceStreamsOutputOnSuccess(t *testing.T) {
 	var out bytes.Buffer
-	err := runOnce(context.Background(), &out, &out, "echo", "hello")
+	err := runOnce(context.Background(), false, &out, &out, "echo", "hello")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestRunOnceStreamsOutputOnSuccess(t *testing.T) {
 }
 
 func TestRunOnceReturnsErrorOnFailure(t *testing.T) {
-	err := runOnce(context.Background(), io.Discard, io.Discard, "false")
+	err := runOnce(context.Background(), false, io.Discard, io.Discard, "false")
 	if err == nil {
 		t.Fatal("want an error for a command that exits non-zero, got nil")
 	}
