@@ -39,7 +39,11 @@ func TestShouldRun(t *testing.T) {
 }
 
 func TestWantsRun(t *testing.T) {
-	files := map[string]bool{"notes/todo.txt": true}
+	todo := filepath.FromSlash("notes/todo.txt")
+	other := filepath.FromSlash("notes/other.txt")
+	mainGo := filepath.FromSlash("src/main.go")
+	readme := filepath.FromSlash("src/readme.md")
+	files := map[string]bool{todo: true}
 	treeDirs := map[string]bool{"src": true}
 	cases := []struct {
 		name     string
@@ -50,12 +54,12 @@ func TestWantsRun(t *testing.T) {
 		treeDirs map[string]bool
 		want     bool
 	}{
-		{"exact file target fires", "notes/todo.txt", fsnotify.Write, nil, files, treeDirs, true},
-		{"exact file ignores chmod-only", "notes/todo.txt", fsnotify.Chmod, nil, files, treeDirs, false},
-		{"sibling in a file's dir is ignored", "notes/other.txt", fsnotify.Write, nil, files, treeDirs, false},
-		{"file in a watched tree fires via extension", "src/main.go", fsnotify.Write, []string{"go"}, files, treeDirs, true},
-		{"file in a watched tree with wrong extension", "src/readme.md", fsnotify.Write, []string{"go"}, files, treeDirs, false},
-		{"pure dir mode delegates to shouldRun", "src/main.go", fsnotify.Write, []string{"go"}, nil, treeDirs, true},
+		{"exact file target fires", todo, fsnotify.Write, nil, files, treeDirs, true},
+		{"exact file ignores chmod-only", todo, fsnotify.Chmod, nil, files, treeDirs, false},
+		{"sibling in a file's dir is ignored", other, fsnotify.Write, nil, files, treeDirs, false},
+		{"file in a watched tree fires via extension", mainGo, fsnotify.Write, []string{"go"}, files, treeDirs, true},
+		{"file in a watched tree with wrong extension", readme, fsnotify.Write, []string{"go"}, files, treeDirs, false},
+		{"pure dir mode delegates to shouldRun", mainGo, fsnotify.Write, []string{"go"}, nil, treeDirs, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

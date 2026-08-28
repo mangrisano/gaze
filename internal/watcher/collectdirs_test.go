@@ -3,6 +3,7 @@ package watcher
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"sort"
 	"testing"
@@ -36,6 +37,9 @@ func TestCollectDirs(t *testing.T) {
 }
 
 func TestCollectDirsSkipsUnreadableDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod 0o000 does not restrict directory reads on Windows")
+	}
 	if os.Geteuid() == 0 {
 		t.Skip("root bypasses directory permissions")
 	}
