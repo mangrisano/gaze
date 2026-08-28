@@ -67,17 +67,38 @@ gaze [flags] -- <command> [args...]
 
 Everything after `--` is the command to run.
 
-| Flag           | Repeatable | Default     | Description                                                                                                      |
-| -------------- | :--------: | ----------- | ---------------------------------------------------------------------------------------------------------------- |
-| `-e ext`       |    yes     | (all files) | Only react to files with this extension (e.g. `-e go`).                                                          |
-| `-p path`      |    yes     | `.`         | File or directory to watch (dirs are recursive).                                                                 |
-| `-i substr`    |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`).                                                    |
-| `-d dur`       |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).                                                           |
-| `-c`           |     no     | off         | Clear the terminal before each run.                                                                              |
-| `-r`           |     no     | off         | Restart mode for long-running commands: on change, SIGTERM the whole process group (graceful), then start fresh. |
-| `-k dur`       |     no     | `5s`        | Grace period before force-killing on restart (with `-r`), e.g. `-k 10s`.                                         |
-| `--no-initial` |     no     | off         | Skip the run on startup; only run when a file actually changes.                                                  |
-| `--version`    |     no     | —           | Print the version and exit (also `-v`).                                                                          |
+| Flag              | Repeatable | Default     | Description                                                                                                      |
+| ----------------- | :--------: | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `-e, --ext`       |    yes     | (all files) | Only react to files with this extension (e.g. `-e go`).                                                          |
+| `-p, --path`      |    yes     | `.`         | File or directory to watch (dirs are recursive).                                                                 |
+| `-i, --ignore`    |    yes     | —           | Ignore any path containing this substring (e.g. `-i vendor`).                                                    |
+| `-d, --debounce`  |     no     | `200ms`     | Debounce window (any Go duration, e.g. `500ms`, `1s`).                                                           |
+| `-c, --clear`     |     no     | off         | Clear the terminal before each run.                                                                              |
+| `-r, --restart`   |     no     | off         | Restart mode for long-running commands: on change, SIGTERM the whole process group (graceful), then start fresh. |
+| `-k, --grace`     |     no     | `5s`        | Grace period before force-killing on restart (with `-r`), e.g. `-k 10s`.                                         |
+| `--no-initial`    |     no     | off         | Skip the run on startup; only run when a file actually changes.                                                  |
+| `-v, --version`   |     no     | —           | Print the version and exit.                                                                                      |
+
+## Shell completions
+
+gaze generates completion scripts for your shell:
+
+```sh
+gaze completion zsh   # also: bash, fish, powershell
+```
+
+Install them once, then restart your shell. Examples:
+
+```sh
+# zsh (into a directory on your $fpath)
+gaze completion zsh > "${fpath[1]}/_gaze"
+
+# bash
+gaze completion bash > /usr/local/etc/bash_completion.d/gaze
+
+# fish
+gaze completion fish > ~/.config/fish/completions/gaze.fish
+```
 
 ## Examples
 

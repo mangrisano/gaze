@@ -3,26 +3,15 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"github.com/mangrisano/gaze/internal/watcher"
+	"github.com/spf13/cobra"
 )
-
-// multiFlag collects a repeatable flag (e.g. -e go -e tmpl) into a slice.
-type multiFlag []string
-
-func (m *multiFlag) String() string { return strings.Join(*m, ",") }
-func (m *multiFlag) Set(v string) error {
-	*m = append(*m, v)
-	return nil
-}
 
 // version is overwritten at build time via -ldflags "-X main.version=...".
 var version = "dev"
@@ -53,51 +42,79 @@ func resolveVersion() string {
 }
 
 func main() {
+	// splitArgs peels off the command after "--" so cobra only parses gaze's
+	// own flags; the wrapped command never touches cobra's flag parser.
 	own, command := splitArgs(os.Args[1:])
+	root := newRootCmd(command)
+	root.SetArgs(own)
+	if err := root.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
 
-	fs := flag.NewFlagSet("gaze", flag.ExitOnError)
-	var exts, paths, ignore multiFlag
-	fs.Var(&exts, "e", "file extension to watch, repeatable (e.g. -e go)")
-	fs.Var(&paths, "p", "file or directory to watch, repeatable (default .)")
-	fs.Var(&ignore, "i", "path substring to ignore, repeatable (e.g. -i vendor)")
-	clear := fs.Bool("c", false, "clear the terminal before watching")
-	restart := fs.Bool("r", false, "restart mode: SIGTERM + process-group kill for long running commands")
-	grace := fs.Duration("k", 5*time.Second, "grace period before force-killing on restart (with -r)")
-	noInitial := fs.Bool("no-initial", false, "skip the initial run on startup")
-	delay := fs.Duration("d", 200*time.Millisecond, "debounce window")
-	showVersion := fs.Bool("v", false, "print version and exit")
-	fs.BoolVar(showVersion, "version", false, "print version and exit")
-	fs.Parse(own)
+// newRootCmd builds the gaze command. command is the argv after "--" (the
+// program to run), already separated out by splitArgs.
+func newRootCmd(command []string) *cobra.Command {
+	var (
+		exts     []string
+		paths    []string
+		ignore   []string
+		clear    bool
+		restart  bool
+		noInit   bool
+		debounce time.Duration
+		grace    time.Duration
+	)
 
-	if *showVersion {
-		fmt.Println("gaze", resolveVersion())
-		return
+	cmd := &cobra.Command{
+		Use:   "gaze [flags] -- <command> [args...]",
+		Short: "Re-run a command whenever a watched file changes",
+		Long: "gaze watches files and re-runs a command on every change.\n" +
+			"Everything after -- is the command to run.",
+		Version:      resolveVersion(),
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			if len(command) == 0 {
+				return fmt.Errorf("no command to run; usage: gaze [flags] -- <command> [args...]")
+			}
+			if len(paths) == 0 {
+				paths = []string{"."}
+			}
+			// A cancelled context on Ctrl-C flows into Run, shutting the pipeline down.
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+			defer stop()
+
+			return watcher.Run(ctx, watcher.Config{
+				Paths:     paths,
+				Exts:      exts,
+				Ignore:    ignore,
+				Debounce:  debounce,
+				Clear:     clear,
+				Restart:   restart,
+				NoInitial: noInit,
+				Grace:     grace,
+				Command:   command,
+			})
+		},
 	}
 
-	if len(command) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: gaze [flags] -- <command> [args...]")
-		os.Exit(2)
-	}
-	if len(paths) == 0 {
-		paths = multiFlag{"."}
+	f := cmd.Flags()
+	f.StringArrayVarP(&exts, "ext", "e", nil, "file extension to watch, repeatable (e.g. -e go)")
+	f.StringArrayVarP(&paths, "path", "p", nil, "file or directory to watch, repeatable (default .)")
+	f.StringArrayVarP(&ignore, "ignore", "i", nil, "path substring to ignore, repeatable (e.g. -i vendor)")
+	f.DurationVarP(&debounce, "debounce", "d", 200*time.Millisecond, "debounce window")
+	f.BoolVarP(&clear, "clear", "c", false, "clear the terminal before each run")
+	f.BoolVarP(&restart, "restart", "r", false, "restart mode: SIGTERM + process-group kill for long-running commands")
+	f.DurationVarP(&grace, "grace", "k", 5*time.Second, "grace period before force-killing on restart (with -r)")
+	f.BoolVar(&noInit, "no-initial", false, "skip the initial run on startup")
+	f.BoolP("version", "v", false, "print version and exit")
+
+	cmd.SetVersionTemplate("gaze {{.Version}}\n")
+
+	// -e/-i/-d/-k take non-path values; -p keeps the default file completion.
+	for _, name := range []string{"ext", "ignore", "debounce", "grace"} {
+		_ = cmd.RegisterFlagCompletionFunc(name, cobra.NoFileCompletions)
 	}
 
-	// A cancelled context on Ctrl-C flows into Run, which shuts the pipeline down.
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	cfg := watcher.Config{
-		Paths:     paths,
-		Exts:      exts,
-		Ignore:    ignore,
-		Debounce:  *delay,
-		Clear:     *clear,
-		Restart:   *restart,
-		NoInitial: *noInitial,
-		Grace:     *grace,
-		Command:   command,
-	}
-	if err := watcher.Run(ctx, cfg); err != nil {
-		log.Fatal(err)
-	}
+	return cmd
 }
