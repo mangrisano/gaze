@@ -24,6 +24,7 @@ Runs your tests once immediately, then again on every save.
 - **Debouncing** — a burst of events (editor writes, `git checkout`, etc.) is coalesced into a single run.
 - **Cancels the previous run** when a new change arrives, so runs never pile up.
 - **Filtering** by extension and by ignored path substrings.
+- **Tells the command which file changed** via the `GAZE_FILE` environment variable.
 - **Graceful shutdown** on Ctrl-C (the running command is cancelled cleanly).
 
 ## Install
@@ -108,6 +109,18 @@ Restart a server on change — `-r` gracefully SIGTERMs the whole process group,
 gaze -r -e go -- go run ./cmd/server
 ```
 
+Act on the file that changed — gaze exports its path as `GAZE_FILE` (unset on the startup run, so use a `:-` fallback):
+
+```sh
+# test only the package of the changed file
+gaze -e go -- sh -c 'go test ./"$(dirname "${GAZE_FILE:-.}")"'
+
+# lint just the file that changed
+gaze -e py -- sh -c 'ruff check "${GAZE_FILE:-.}"'
+```
+
+The path is the one fsnotify reports, relative to the watched root (e.g. `internal/watcher/match.go`). When a burst of files changes at once, `GAZE_FILE` holds the last one.
+
 ## How it works
 
 The core is a small pipeline of channels:
@@ -117,9 +130,9 @@ fsnotify events → shouldRun (filter) → debounce → runLoop → runOnce → 
 ```
 
 - **`shouldRun`** decides which file changes matter (ignore substring wins; empty `-e` means all files; otherwise the path must end in `.ext`).
-- **`debounce`** collapses a burst of events into one signal using `select` + `time.After`.
+- **`debounce`** collapses a burst of events into one signal using `select` + `time.After`, carrying the last changed path.
 - **`runLoop`** starts the command for each signal and cancels the previous run (via `context`) when a new one arrives.
-- **`runOnce`** runs the command with `exec.CommandContext`, wiring stdout/stderr through.
+- **`runOnce`** runs the command with `exec.CommandContext`, wiring stdout/stderr through and exporting the changed file as `GAZE_FILE`.
 
 fsnotify is not recursive on its own, so `collectDirs` walks the tree with `filepath.WalkDir` and every directory is added to the watcher. Directories created while gaze is running are detected and watched too.
 

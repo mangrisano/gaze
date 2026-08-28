@@ -27,7 +27,7 @@ while :; do sleep 0.02; done`
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
-		_ = runOnce(ctx, true, io.Discard, io.Discard, "sh", "-c", script)
+		_ = runOnce(ctx, true, "", io.Discard, io.Discard, "sh", "-c", script)
 		close(done)
 	}()
 

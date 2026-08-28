@@ -3,15 +3,19 @@ package watcher
 import (
 	"context"
 	"io"
+	"os"
 	"os/exec"
 )
 
 // runOnce runs name+args, streaming stdout/stderr to the given writers, and
 // returns the command's exit error (nil on success).
-func runOnce(ctx context.Context, restart bool, stdout, stderr io.Writer, name string, args ...string) error {
+func runOnce(ctx context.Context, restart bool, changed string, stdout, stderr io.Writer, name string, args ...string) error {
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	if changed != "" {
+		cmd.Env = append(os.Environ(), "GAZE_FILE="+changed)
+	}
 	if restart {
 		setupRestart(cmd)
 	}

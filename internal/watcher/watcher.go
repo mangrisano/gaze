@@ -69,17 +69,17 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 
 	// Pipeline: raw pings -> debounce -> runLoop -> the command.
-	in := make(chan struct{})
+	in := make(chan string)
 	trigger := debounce(in, cfg.Debounce)
-	go runLoop(trigger, func(runCtx context.Context) {
+	go runLoop(trigger, func(runCtx context.Context, path string) {
 		if cfg.Clear {
 			clearScreen(os.Stdout)
 		}
-		runOnce(runCtx, cfg.Restart, os.Stdout, os.Stderr, cfg.Command[0], cfg.Command[1:]...)
+		runOnce(runCtx, cfg.Restart, path, os.Stdout, os.Stderr, cfg.Command[0], cfg.Command[1:]...)
 	})
 
 	fmt.Printf("watching %s  cmd: %s\n", strings.Join(cfg.Paths, ", "), strings.Join(cfg.Command, " "))
-	in <- struct{}{} // initial run on startup
+	in <- "" // initial run on startup
 
 	for {
 		select {
@@ -92,7 +92,7 @@ func Run(ctx context.Context, cfg Config) error {
 				}
 			}
 			if wantsRun(event.Name, event.Op, cfg.Exts, cfg.Ignore, files, treeDirs) {
-				in <- struct{}{}
+				in <- event.Name
 			}
 		case err := <-w.Errors:
 			fmt.Fprintln(os.Stderr, "watch error:", err)

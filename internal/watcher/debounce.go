@@ -4,8 +4,9 @@ import "time"
 
 // debounce forwards one signal only after in has been quiet for d, coalescing a
 // burst into a single output. It closes the returned channel when in closes.
-func debounce(in <-chan struct{}, d time.Duration) <-chan struct{} {
-	out := make(chan struct{})
+func debounce(in <-chan string, d time.Duration) <-chan string {
+	out := make(chan string)
+	var last string
 	go func() {
 		defer close(out)
 
@@ -14,13 +15,14 @@ func debounce(in <-chan struct{}, d time.Duration) <-chan struct{} {
 
 		for {
 			select {
-			case _, ok := <-in:
+			case v, ok := <-in:
 				if !ok {
 					return
 				}
+				last = v
 				timer = time.After(d)
 			case <-timer:
-				out <- struct{}{}
+				out <- last
 				timer = nil
 			}
 		}
