@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -41,4 +42,17 @@ func wantsRun(name string, op fsnotify.Op, exts, ignore []string, files, treeDir
 		return false
 	}
 	return shouldRun(name, op, exts, ignore)
+}
+
+// shouldWatchNewDir reports whether the event created a new directory inside a
+// watched tree, so its subtree should be added to the watcher.
+func shouldWatchNewDir(name string, op fsnotify.Op, treeDirs map[string]bool) bool {
+	if !op.Has(fsnotify.Create) {
+		return false
+	}
+	if !treeDirs[filepath.Clean(filepath.Dir(name))] {
+		return false
+	}
+	info, err := os.Stat(name)
+	return err == nil && info.IsDir()
 }

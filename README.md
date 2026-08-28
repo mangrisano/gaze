@@ -121,7 +121,7 @@ fsnotify events → shouldRun (filter) → debounce → runLoop → runOnce → 
 - **`runLoop`** starts the command for each signal and cancels the previous run (via `context`) when a new one arrives.
 - **`runOnce`** runs the command with `exec.CommandContext`, wiring stdout/stderr through.
 
-fsnotify is not recursive on its own, so `collectDirs` walks the tree with `filepath.WalkDir` and every directory is added to the watcher.
+fsnotify is not recursive on its own, so `collectDirs` walks the tree with `filepath.WalkDir` and every directory is added to the watcher. Directories created while gaze is running are detected and watched too.
 
 ## Project layout
 

@@ -1,6 +1,8 @@
 package watcher
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/fsnotify/fsnotify"
@@ -59,6 +61,40 @@ func TestWantsRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := wantsRun(tc.path, tc.op, tc.exts, nil, tc.files, tc.treeDirs); got != tc.want {
 				t.Fatalf("wantsRun(%q, op=%v) = %v, want %v", tc.path, tc.op, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestShouldWatchNewDir(t *testing.T) {
+	root := t.TempDir()
+	sub := filepath.Join(root, "newpkg")
+	if err := os.Mkdir(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(root, "file.go")
+	if err := os.WriteFile(file, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	watched := map[string]bool{filepath.Clean(root): true}
+
+	cases := []struct {
+		name     string
+		path     string
+		op       fsnotify.Op
+		treeDirs map[string]bool
+		want     bool
+	}{
+		{"new dir inside a watched tree", sub, fsnotify.Create, watched, true},
+		{"a created file is not a dir", file, fsnotify.Create, watched, false},
+		{"non-create op on a dir", sub, fsnotify.Write, watched, false},
+		{"parent not a watched tree", sub, fsnotify.Create, map[string]bool{}, false},
+		{"nonexistent path", filepath.Join(root, "gone"), fsnotify.Create, watched, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := shouldWatchNewDir(tc.path, tc.op, tc.treeDirs); got != tc.want {
+				t.Fatalf("shouldWatchNewDir(%q, op=%v) = %v, want %v", tc.path, tc.op, got, tc.want)
 			}
 		})
 	}

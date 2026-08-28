@@ -44,6 +44,13 @@ func Run(ctx context.Context, cfg Config) error {
 			fmt.Fprintf(os.Stderr, "gaze: skipping %q: %v\n", d, err)
 		}
 	}
+	// addDirs records each dir as a watched tree and starts watching it.
+	addDirs := func(dirs []string) {
+		for _, d := range dirs {
+			treeDirs[filepath.Clean(d)] = true
+			watch(d)
+		}
+	}
 	for _, p := range cfg.Paths {
 		info, err := os.Stat(p)
 		if err != nil {
@@ -54,10 +61,7 @@ func Run(ctx context.Context, cfg Config) error {
 			if err != nil {
 				return fmt.Errorf("cannot scan %q: %w", p, err)
 			}
-			for _, d := range dirs {
-				treeDirs[filepath.Clean(d)] = true
-				watch(d)
-			}
+			addDirs(dirs)
 			continue
 		}
 		files[filepath.Clean(p)] = true
@@ -80,6 +84,13 @@ func Run(ctx context.Context, cfg Config) error {
 	for {
 		select {
 		case event := <-w.Events:
+			// A new directory inside a watched tree isn't watched by fsnotify on
+			// its own, so add its subtree as soon as it appears.
+			if shouldWatchNewDir(event.Name, event.Op, treeDirs) {
+				if dirs, err := collectDirs(event.Name, cfg.Ignore); err == nil {
+					addDirs(dirs)
+				}
+			}
 			if wantsRun(event.Name, event.Op, cfg.Exts, cfg.Ignore, files, treeDirs) {
 				in <- struct{}{}
 			}
