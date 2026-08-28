@@ -62,6 +62,8 @@ func main() {
 	fs.Var(&ignore, "i", "path substring to ignore, repeatable (e.g. -i vendor)")
 	clear := fs.Bool("c", false, "clear the terminal before watching")
 	restart := fs.Bool("r", false, "restart mode: SIGTERM + process-group kill for long running commands")
+	grace := fs.Duration("k", 5*time.Second, "grace period before force-killing on restart (with -r)")
+	noInitial := fs.Bool("no-initial", false, "skip the initial run on startup")
 	delay := fs.Duration("d", 200*time.Millisecond, "debounce window")
 	showVersion := fs.Bool("v", false, "print version and exit")
 	fs.BoolVar(showVersion, "version", false, "print version and exit")
@@ -85,13 +87,15 @@ func main() {
 	defer stop()
 
 	cfg := watcher.Config{
-		Paths:    paths,
-		Exts:     exts,
-		Ignore:   ignore,
-		Debounce: *delay,
-		Clear:    *clear,
-		Restart:  *restart,
-		Command:  command,
+		Paths:     paths,
+		Exts:      exts,
+		Ignore:    ignore,
+		Debounce:  *delay,
+		Clear:     *clear,
+		Restart:   *restart,
+		NoInitial: *noInitial,
+		Grace:     *grace,
+		Command:   command,
 	}
 	if err := watcher.Run(ctx, cfg); err != nil {
 		log.Fatal(err)

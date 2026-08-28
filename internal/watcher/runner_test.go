@@ -10,7 +10,7 @@ import (
 
 func TestRunOnceStreamsOutputOnSuccess(t *testing.T) {
 	var out bytes.Buffer
-	err := runOnce(context.Background(), false, "", &out, &out, "echo", "hello")
+	err := runOnce(context.Background(), false, 0, "", &out, &out, "echo", "hello")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestRunOnceStreamsOutputOnSuccess(t *testing.T) {
 }
 
 func TestRunOnceReturnsErrorOnFailure(t *testing.T) {
-	err := runOnce(context.Background(), false, "", io.Discard, io.Discard, "false")
+	err := runOnce(context.Background(), false, 0, "", io.Discard, io.Discard, "false")
 	if err == nil {
 		t.Fatal("want an error for a command that exits non-zero, got nil")
 	}
@@ -28,7 +28,7 @@ func TestRunOnceReturnsErrorOnFailure(t *testing.T) {
 
 func TestRunOnceSetsGazeFileEnv(t *testing.T) {
 	var out bytes.Buffer
-	err := runOnce(context.Background(), false, "internal/watcher/match.go", &out, &out, "sh", "-c", `printf %s "$GAZE_FILE"`)
+	err := runOnce(context.Background(), false, 0, "internal/watcher/match.go", &out, &out, "sh", "-c", `printf %s "$GAZE_FILE"`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestRunOnceSetsGazeFileEnv(t *testing.T) {
 func TestRunOnceOmitsGazeFileWhenNoPath(t *testing.T) {
 	var out bytes.Buffer
 	// With no changed path we don't set GAZE_FILE, so it stays unset.
-	err := runOnce(context.Background(), false, "", &out, &out, "sh", "-c", `printf %s "${GAZE_FILE-unset}"`)
+	err := runOnce(context.Background(), false, 0, "", &out, &out, "sh", "-c", `printf %s "${GAZE_FILE-unset}"`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

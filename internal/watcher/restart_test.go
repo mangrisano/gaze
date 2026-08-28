@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -27,7 +28,7 @@ while :; do sleep 0.02; done`
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
-		_ = runOnce(ctx, true, "", io.Discard, io.Discard, "sh", "-c", script)
+		_ = runOnce(ctx, true, 5*time.Second, "", io.Discard, io.Discard, "sh", "-c", script)
 		close(done)
 	}()
 
@@ -42,6 +43,21 @@ while :; do sleep 0.02; done`
 
 	if _, err := os.Stat(marker); err != nil {
 		t.Fatalf("SIGTERM was not delivered gracefully (no marker): %v", err)
+	}
+}
+
+func TestSetupRestartConfiguresGracefulTermination(t *testing.T) {
+	cmd := exec.Command("true")
+	setupRestart(cmd, 3*time.Second)
+
+	if cmd.WaitDelay != 3*time.Second {
+		t.Fatalf("WaitDelay = %v, want %v", cmd.WaitDelay, 3*time.Second)
+	}
+	if cmd.SysProcAttr == nil || !cmd.SysProcAttr.Setpgid {
+		t.Fatal("want the command to run in its own process group (Setpgid)")
+	}
+	if cmd.Cancel == nil {
+		t.Fatal("want a Cancel func that sends SIGTERM")
 	}
 }
 
